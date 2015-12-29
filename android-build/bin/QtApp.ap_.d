@@ -1,0 +1,26 @@
+/home/cquiros/development/UpdateLists/android-build/bin/QtApp.ap_ \
+ : /home/cquiros/development/UpdateLists/android-build/res/values-et/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-pl/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-ms/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-fr/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-ru/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-zh-rCN/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-fa/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-zh-rTW/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-id/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-nb/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-el/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-de/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-rs/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values/libs.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-ro/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/layout/splash.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-pt-rBR/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-ja/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-es/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-it/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/res/values-nl/strings.xml \
+/home/cquiros/development/UpdateLists/android-build/assets/--Added-by-androiddeployqt-- \
+/home/cquiros/development/UpdateLists/android-build/assets/--Added-by-androiddeployqt--/qt_cache_pregenerated_file_list \
+/home/cquiros/development/UpdateLists/android-build/bin/AndroidManifest.xml \
