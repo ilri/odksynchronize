@@ -16,12 +16,14 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    filedownloader.cpp
+    filedownloader.cpp \
+    prjlistmodel.cpp
 
 android:SOURCES += androidinterface.cpp
 
 HEADERS  += mainwindow.h \
-    filedownloader.h
+    filedownloader.h \
+    prjlistmodel.h
 
 android:HEADERS += androidinterface.h
 

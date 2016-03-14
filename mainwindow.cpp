@@ -7,6 +7,10 @@
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSettings>
+#include <QListView>
+
+
 #if defined(Q_OS_ANDROID)
     #include "androidinterface.h"
 #endif
@@ -19,8 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setWindowTitle("Actualizador de listas");
     this->setWindowState(Qt::WindowMaximized);
     //ui->lblerror->setVisible(false);
-    ui->lbldone->setVisible(false);    
-
+    ui->lbldone->setVisible(false);        
 #if defined(Q_OS_ANDROID)
     androidInterface andInt;
     appPath = andInt.getExternalStorageDirectory();    
@@ -48,6 +51,35 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     ui->cmdact->setEnabled(false);
     ui->cmdupd->setEnabled(false);
+
+    QSettings settings("ILRI","UpdateLists");
+    ui->txtprjurl->setText(settings.value("projectsURL","http://data.ilri.org/portal/rdm/projects/projects.xml").toString());
+    if (settings.value("projectsURL","None").toString() == "None")
+        settings.setValue("projectsURL","http://data.ilri.org/portal/rdm/projects/projects.xml");
+
+
+    projectURL = settings.value("projectURL","None").toString();
+    projectCode = settings.value("projectCode","None").toString();
+    projectName = settings.value("projectName","Not set. Got to settings").toString();
+    ui->lblproject->setText("<html><head/><body><p><span style=\" font-size:36pt;\">" + projectName + "</span></p></body></html>");
+
+    if (ui->lblproject->text() == "Not set. Got to settings")
+    {
+        ui->stackedWidget->setCurrentIndex(1);
+    }
+    else
+    {
+        ui->stackedWidget->setCurrentIndex(0);
+    }
+
+    m_projectModel = new prjListModel(this);
+    m_projectModel->loadProjects(dataPath + "/updatelists.ilri.org/projects.xml",projectCode);
+    ui->lstproject->setModel(m_projectModel);
+    ui->lstproject->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+    ui->lstproject->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    ui->lstproject->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+
 }
 
 MainWindow::~MainWindow()
@@ -57,26 +89,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::procError(QString text)
 {
-    ui->listWidget->addItem("Error:" + text);
-    /*//if (ui->lblerror->isVisible() == false)
-    //{
-        ui->lblerror->setVisible(true);
-        ui->lblerror->setText(text);
-        ui->lblerror->setWordWrap(true);
-        ui->cmdactxml->setEnabled(false);
-        ui->cmdact->setEnabled(false);
-        QFont font;
-        font.setBold(true);
-        font.setPointSize(18);
-        ui->lblerror->setFont(font);
-
-        QPalette palette = ui->lblerror->palette();
-        palette.setColor(ui->lblerror->backgroundRole(), Qt::black);
-        palette.setColor(ui->lblerror->foregroundRole(), Qt::red);
-
-        ui->lblerror->setPalette(palette);
-
-    //}*/
+    ui->listWidget->addItem("Error:" + text);    
 }
 
 void MainWindow::on_cmdsalir_clicked()
@@ -319,17 +332,83 @@ void MainWindow::loadXML(QString fileName, QByteArray data)
     ui->cmdactxml->setEnabled(false);
 }
 
+void MainWindow::saveProjectFile(QString fileName, QByteArray data)
+{
+    QFile file(dataPath + "/updatelists.ilri.org/"+ fileName);
+    file.open(QIODevice::WriteOnly);
+    file.write(data);
+    file.close();
+
+    //Load the XML
+
+    ui->cmdproject->setEnabled(true);
+    ui->cmdapply->setEnabled(true);
+    ui->cmdcancel->setEnabled(true);
+    ui->lstproject->setEnabled(true);
+    m_projectModel->loadProjects(dataPath + "/updatelists.ilri.org/projects.xml",projectCode);
+}
+
 void MainWindow::on_cmdactxml_clicked()
 {
-    //Obtain the villages file
-    QUrl xmlUrl("http://data.ilri.org/portal/rdm/projects/adanicaragua/lists.xml");
-    //QUrl xmlUrl("http://192.168.1.102:5000/rdm/projects/adanicaragua/lists.xml");
-    m_XMLFile = new FileDownloader(xmlUrl,"lists.xml",this);
-    connect(m_XMLFile, SIGNAL(downloaded(QString,QByteArray)), this, SLOT(loadXML(QString,QByteArray)));
-    m_XMLFile->startDownload();
+    if (projectURL != "None")
+    {
+        //QUrl xmlUrl("http://data.ilri.org/portal/rdm/projects/adanicaragua/lists.xml");
+        QUrl xmlUrl(projectURL);
+        //QUrl xmlUrl("http://192.168.1.102:5000/rdm/projects/adanicaragua/lists.xml");
+        m_XMLFile = new FileDownloader(xmlUrl,"lists.xml",this);
+        connect(m_XMLFile, SIGNAL(downloaded(QString,QByteArray)), this, SLOT(loadXML(QString,QByteArray)));
+        m_XMLFile->startDownload();
+    }
 }
 
 void MainWindow::on_cmdupd_clicked()
 {
     replaceFiles();
+}
+
+void MainWindow::on_cmdsettings_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(1);
+}
+
+void MainWindow::on_cmdcancel_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::on_cmdapply_clicked()
+{
+    QSettings settings("ILRI","UpdateLists");
+    settings.setValue("projectsURL",ui->txtprjurl->text());
+    settings.setValue("projectCode",projectCode);
+    settings.setValue("projectURL",projectURL);
+    settings.setValue("projectName",projectName);
+
+    ui->stackedWidget->setCurrentIndex(0);
+}
+
+void MainWindow::on_cmdproject_clicked()
+{
+    ui->cmdproject->setEnabled(false);
+    ui->cmdapply->setEnabled(false);
+    ui->cmdcancel->setEnabled(false);
+    ui->lstproject->setEnabled(false);
+    QUrl xmlUrl(ui->txtprjurl->text());
+
+    m_XMLFile = new FileDownloader(xmlUrl,"projects.xml",this);
+    connect(m_XMLFile, SIGNAL(downloaded(QString,QByteArray)), this, SLOT(saveProjectFile(QString,QByteArray)));
+    m_XMLFile->startDownload();
+}
+
+void MainWindow::on_cmdactive_clicked()
+{
+    if (ui->lstproject->currentIndex().isValid())
+    {
+        QModelIndex idx = ui->lstproject->currentIndex();
+        projectCode = m_projectModel->getProjectCode(idx);
+        projectURL = m_projectModel->getProjectUrl(idx);
+        projectName = m_projectModel->getProjectName(idx);
+        ui->lblproject->setText("<html><head/><body><p><span style=\" font-size:36pt;\">" + projectName + "</span></p></body></html>");
+        m_projectModel->setActiveProject(idx);
+    }
 }
