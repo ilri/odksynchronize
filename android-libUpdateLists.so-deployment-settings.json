@@ -9,6 +9,7 @@
    "toolchain-version": "4.9",
    "ndk-host": "linux-x86",
    "target-architecture": "armeabi-v7a",
+   "android-package-source-directory": "/home/cquiros/development/UpdateLists/android",
    "qml-root-path": "/home/cquiros/development/UpdateLists",
    "application-binary": "/home/cquiros/development/UpdateLists/libUpdateLists.so"
 }
