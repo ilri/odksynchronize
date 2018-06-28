@@ -33,5 +33,3 @@ android-build
 #QtCtreator Qml
 *.qmlproject.user
 *.qmlproject.user.*
-
-*.apk
