@@ -38,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         if (!dir.mkpath(dataPath + "/updatelists.ilri.org/temp"))
         {
-            procError("Cannot create temporary directory: " + dataPath + "/updatelists.ilri.org/temp");
+            procError(tr("Cannot create temporary directory: %1 /updatelists.ilri.org/temp").arg(dataPath));
         }
     }
     else
@@ -53,9 +53,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->cmdupd->setEnabled(false);
 
     QSettings settings("ILRI","UpdateLists");
-    ui->txtprjurl->setText(settings.value("projectsURL","http://data.ilri.org/portal/rdm/projects/projects.xml").toString());
+    ui->txtprjurl->setText(settings.value("projectsURL","http://data.ilri.org/rdm/public/projects/projects.xml").toString());
     if (settings.value("projectsURL","None").toString() == "None")
-        settings.setValue("projectsURL","http://data.ilri.org/portal/rdm/projects/projects.xml");
+        settings.setValue("projectsURL","http://data.ilri.org/rdm/public/projects/projects.xml");
 
 
     projectURL = settings.value("projectURL","None").toString();
@@ -111,13 +111,13 @@ void MainWindow::on_cmdact_clicked()
     QFile xmlfile(dataPath + "/updatelists.ilri.org/lists.xml");
     if (!xmlfile.open(QIODevice::ReadOnly))
     {
-        procError("Cannot open XML file");
+        procError(tr("Cannot open XML file"));
         return;
     }
     QDomDocument doc("ODKDocument");
     if (!doc.setContent(&xmlfile))
     {
-        procError("Cannot read XML files");
+        procError(tr("Cannot read XML file"));
         return;
     }
     xmlfile.close();
@@ -181,13 +181,13 @@ void MainWindow::replaceFiles()
         QFile xmlfile(dataPath + "/updatelists.ilri.org/lists.xml");
         if (!xmlfile.open(QIODevice::ReadOnly))
         {
-            procError("No se puede abrir el archivo XML");
+            procError(tr("Cannot open lists XML file"));
             return;
         }
         QDomDocument doc("ODKDocument");
         if (!doc.setContent(&xmlfile))
         {
-            procError("No se puede leer el archivo XML");
+            procError(tr("List XML cannot be read"));
             return;
         }
         xmlfile.close();
@@ -200,9 +200,21 @@ void MainWindow::replaceFiles()
         QSqlDatabase target = QSqlDatabase::addDatabase("QSQLITE","TargetDB");
         for (int nlist = 0; nlist < lists.count();nlist++)
         {
-            QString targetFileName = lists.item(nlist).toElement().attribute("file","NONE");
+            QString zipFileName = lists.item(nlist).toElement().attribute("file","NONE");
+            QString targetFileName = zipFileName.replace(".zdb",".db");
             if (targetFileName != "NONE")
             {
+
+                QFile infile(zipFileName);
+                QFile outfile(targetFileName);
+                infile.open(QIODevice::ReadOnly);
+                outfile.open(QIODevice::WriteOnly);
+                QByteArray compressed_data = infile.readAll();
+                QByteArray uncompressed_data = qUncompress(compressed_data);
+                outfile.write(uncompressed_data);
+                infile.close();
+                outfile.close();
+
                 source.close();
                 source.setDatabaseName(dataPath + "/updatelists.ilri.org/temp/" + targetFileName);
 
@@ -256,7 +268,7 @@ void MainWindow::replaceFiles()
                                             for (clm = 0; clm < columns.count();clm++)
                                             {
                                                 if (columns.item(clm).toElement().attribute("type","string") == "string")
-                                                    sql = sql + "'" + squery.value(clm).toString() + "',";
+                                                    sql = sql + "\"" + squery.value(clm).toString().replace("\"","'") + "\",";
                                                 else
                                                     sql = sql + squery.value(clm).toString() + ",";
                                             }
@@ -265,7 +277,7 @@ void MainWindow::replaceFiles()
 
                                             if (!tquery.exec(sql))
                                             {
-                                                ui->listWidget->addItem("Error insertando datos en " + formDir + " db: " + targetFileName + " :" + tquery.lastError().databaseText());
+                                                ui->listWidget->addItem(tr("Error adding data in dictory %1,for form %2 . Error: %3 ").arg(formDir,targetFileName,tquery.lastError().databaseText()));
                                                 updateError = true;
                                                 break;
                                             }
@@ -273,14 +285,14 @@ void MainWindow::replaceFiles()
                                     }
                                     else
                                     {
-                                        ui->listWidget->addItem("Error en consulta para " + formDir + " db: " + targetFileName + " :" + squery.lastError().databaseText());
+                                        ui->listWidget->addItem(tr("Error querying data in directory %1, for form %2 . Error: %3").arg(formDir,targetFileName,squery.lastError().databaseText()));
                                         updateError = true;
                                         break;
                                     }
                                 }
                                 else
                                 {
-                                    ui->listWidget->addItem("No se pueden borrar los datos existentes");
+                                    ui->listWidget->addItem(tr("Cannot delete existing data"));
                                     updateError = true;
                                     break;
                                 }
@@ -288,27 +300,27 @@ void MainWindow::replaceFiles()
                             }
                             else
                             {
-                                ui->listWidget->addItem("No se puede abrir la base origin or destino");
+                                ui->listWidget->addItem(tr("Cannot open either the source or target database"));
                                 updateError = true;
                                 break;
                             }
                         }
                         else
                         {
-                            ui->listWidget->addItem("La base de datos de origen no existe");
+                            ui->listWidget->addItem(tr("The source database does not exists"));
                             updateError = true;
                             break;
                         }
                     }
                     else
                     {
-                        ui->listWidget->addItem("Nota: Las bases de datos para el formulario " +  formDir + " no existen.");
+                        ui->listWidget->addItem(tr("Note: The database for the form %1 does not exists").arg(formDir));
                     }
                 }
             }
             else
             {
-                ui->listWidget->addItem("El codigo de lista en el XML esta en blanco");
+                ui->listWidget->addItem(tr("The list code in the XML is blank"));
                 updateError = true;
                 break;
             }
@@ -352,9 +364,7 @@ void MainWindow::on_cmdactxml_clicked()
 {
     if (projectURL != "None")
     {
-        //QUrl xmlUrl("http://data.ilri.org/portal/rdm/projects/adanicaragua/lists.xml");
         QUrl xmlUrl(projectURL);
-        //QUrl xmlUrl("http://192.168.1.102:5000/rdm/projects/adanicaragua/lists.xml");
         m_XMLFile = new FileDownloader(xmlUrl,"lists.xml",this);
         connect(m_XMLFile, SIGNAL(downloaded(QString,QByteArray)), this, SLOT(loadXML(QString,QByteArray)));
         m_XMLFile->startDownload();
